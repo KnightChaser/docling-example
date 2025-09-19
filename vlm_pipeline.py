@@ -1,11 +1,19 @@
-# pdf_pipeline.py
+# vlm_pipeline.py
 import os
 import warnings
 from pathlib import Path
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.pipeline.vlm_pipeline import VlmPipeline
+from docling.datamodel.pipeline_options import VlmPipelineOptions
+from docling.datamodel.pipeline_options_vlm_model import (
+    InlineVlmOptions,
+    InferenceFramework,
+    TransformersModelType,
+    ResponseFormat,
+)
 from docling_core.types.doc.base import ImageRefMode
+from docling.datamodel.accelerator_options import AcceleratorDevice
 
 cpu_count = os.cpu_count() or 1
 os.environ.setdefault("OMP_NUM_THREADS", str(cpu_count))
@@ -22,17 +30,29 @@ warnings.filterwarnings(
 )
 
 SRC = Path("./test_pdf/cwst2025.pdf")
-OUT = Path("output")
+OUT = Path("output_vlm")
 OUT.mkdir(parents=True, exist_ok=True)
 
-# NOTE: keep/generate images so REFERENCED export has real files to link
-pipe = PdfPipelineOptions()
-pipe.images_scale = 2.0  # nicer resolution
-pipe.generate_picture_images = True
-pipe.generate_page_images = False  # no full-page images
+vlm_inline = InlineVlmOptions(
+    repo_id="ibm-granite/granite-docling-258M",
+    prompt="Convert this page to markdown. Do not miss any text and only output the bare markdown!",
+    response_format=ResponseFormat.MARKDOWN,
+    inference_framework=InferenceFramework.TRANSFORMERS,
+    transformers_model_type=TransformersModelType.AUTOMODEL_VISION2SEQ,
+    supported_devices=[AcceleratorDevice.CPU],
+    scale=1.5,
+    temperature=0.0,
+)
+
+vlm_opts = VlmPipelineOptions(vlm_options=vlm_inline)
 
 conv = DocumentConverter(
-    format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pipe)}
+    format_options={
+        InputFormat.PDF: PdfFormatOption(
+            pipeline_cls=VlmPipeline,
+            pipeline_options=vlm_opts,
+        )
+    }
 )
 
 res = conv.convert(SRC)
