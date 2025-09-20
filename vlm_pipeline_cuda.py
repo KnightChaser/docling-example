@@ -39,8 +39,8 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 vlm_inline = InlineVlmOptions(
     repo_id="ibm-granite/granite-docling-258M",
-    prompt="Convert this page to markdown. Do not miss any text and only output the bare markdown!",
-    response_format=ResponseFormat.MARKDOWN,
+    prompt="Convert this page to docling",
+    response_format=ResponseFormat.DOCTAGS,
     inference_framework=InferenceFramework.TRANSFORMERS,
     transformers_model_type=TransformersModelType.AUTOMODEL_VISION2SEQ,
     supported_devices=[AcceleratorDevice.CUDA, AcceleratorDevice.CPU], # NOTE: Support both CUDA and CPU
