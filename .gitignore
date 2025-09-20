@@ -1,5 +1,6 @@
 # Local file
 output
+output_vlm
 
 # Python-generated files
 __pycache__/
